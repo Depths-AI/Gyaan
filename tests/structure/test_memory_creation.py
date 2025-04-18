@@ -13,7 +13,9 @@ async def main():
             title="Test Memory",
             description="This is a test memory.",
             embedding=[0.0],
-            keywords=["test"]
+            keywords=["test"],
+            node_attributes={"impact":int},
+            edge_attributes={"type":str}
         )
 
         assert mem.nodes.height==0

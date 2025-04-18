@@ -40,6 +40,12 @@ class Memory():
         node_attributes: Optional[Dict[Any,Any]]={},
         edge_attributes: Optional[Dict[Any,Any]]={}):
 
+        node_schema=generate_node_schema(node_attributes)
+        edge_schema=generate_edge_schema(edge_attributes)
+
+        self.node_columns=list(node_schema.keys())
+        self.edge_columns=list(edge_schema.keys())
+
         metadata_df=pl.DataFrame(data=[{
             "id":self.id,
             "title":self.title,
@@ -47,11 +53,15 @@ class Memory():
             "embedding":self.embedding,
             "keywords":self.keywords,
             "is_deleted":self.is_deleted,
-            "memory_storage_path":self.memory_storage_path
+            "memory_storage_path":self.memory_storage_path,
+            "node_attributes":self.node_columns,
+            "edge_attributes":self.edge_columns
         }])
 
-        self.nodes=pl.DataFrame(schema=generate_node_schema(node_attributes))
-        self.edges=pl.DataFrame(schema=generate_edge_schema(edge_attributes))
+        
+
+        self.nodes=pl.DataFrame(schema=node_schema)
+        self.edges=pl.DataFrame(schema=edge_schema)
 
         await create_table(f"file://{self.metadata_path}", metadata_df)
         await create_table(f"file://{self.nodes_path}", self.nodes)
@@ -59,7 +69,9 @@ class Memory():
     
     async def _load_nodes_edges(self):
         self.nodes=await read_table(f"file://{self.nodes_path}")
+        self.node_columns=self.nodes.columns
         self.edges=await read_table(f"file://{self.edges_path}")
+        self.edge_columns=self.edges.columns
 
     async def update_metadata(
         self,
@@ -87,7 +99,9 @@ class Memory():
             "embedding":self.embedding,
             "keywords":self.keywords,
             "is_deleted":self.is_deleted,
-            "memory_storage_path":self.memory_storage_path
+            "memory_storage_path":self.memory_storage_path,
+            "node_attributes":self.node_columns,
+            "edge_attributes":self.edge_columns
         }])
 
         await create_table(f"file://{self.metadata_path}", metadata_df,mode="overwrite")
@@ -103,7 +117,9 @@ class Memory():
             "embedding":self.embedding,
             "keywords":self.keywords,
             "is_deleted":self.is_deleted,
-            "memory_storage_path":self.memory_storage_path
+            "memory_storage_path":self.memory_storage_path,
+            "node_attributes":self.node_columns,
+            "edge_attributes":self.edge_columns
         }])
 
         await create_table(f"file://{self.metadata_path}", metadata_df,mode="overwrite")
@@ -147,4 +163,39 @@ class Memory():
         else:
             raise ValueError("Memory has been soft-deleted")
     
-        
+    async def add_nodes(
+        self,
+        labels: List[str],
+        weights: List[str],
+        descriptions: List[str],
+        keywords: List[List[str]],
+        embeddings: List[List[float]],
+        **node_attributes: List[Any]):
+
+        batch_size=len(labels)
+
+        node_ids=[str(uuid4()) for _ in range(batch_size)]
+
+        update_dict={
+            "memory_id":[self.id]*batch_size,
+            "node_id":node_ids,
+            "weight":weights,
+            "label":labels,
+            "description":descriptions,
+            "keywords":keywords,
+            "embedding":embeddings,
+            "is_deleted":[False]*batch_size,
+            **node_attributes
+        }
+    
+        assert self.node_columns==list(update_dict.keys()),f"Not all attributes have been supplied. Correct attributes are: {self.node_columns}"
+
+        insertion_df=pl.DataFrame(data=update_dict)
+
+        await insert_table(f"file://{self.nodes_path}", insertion_df)
+
+        async with self._lock:
+            self.nodes=await read_table(f"file://{self.nodes_path}")
+            self.node_columns=self.nodes.columns
+
+        return node_ids
