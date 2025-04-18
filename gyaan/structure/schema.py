@@ -1,0 +1,48 @@
+from typing import List, Dict, Any
+
+MEMORY_SCHEMA={
+    "id": str,  
+    "title": str,
+    "description": str,
+    "keywords": List[str],
+    "embedding": List[float],
+    "is_deleted": bool,
+    "deleted_at": str,
+    "memory_storage_path":str
+}
+
+NODE_SCHEMA={
+    "memory_id": str,  
+    "node_id": str,
+    "weight": float,
+    "label": str,
+    "description": str,
+    "keywords": List[str],
+    "embedding": List[float],
+    "is_deleted": bool,
+    "deleted_at": str
+}
+
+EDGE_SCHEMA={
+    "source_cluster_id": str,  
+    "source_node_id": str,
+    "target_cluster_id": str,  
+    "target_node_id": str,
+    "weight": float,
+    "label": str,
+    "description": str,
+    "keywords": List[str],
+    "embedding": List[float],
+    "is_deleted": bool
+}
+
+def generate_node_schema(custom_attributes: Dict[Any,Any]):
+    node_schema = NODE_SCHEMA.copy()
+    node_schema.update(custom_attributes)
+    return node_schema
+
+def generate_edge_schema(custom_attributes: Dict[Any,Any]):
+    edge_schema=EDGE_SCHEMA.copy()
+    edge_schema.update(custom_attributes)
+    return edge_schema
+    
