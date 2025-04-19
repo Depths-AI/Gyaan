@@ -298,7 +298,7 @@ class Memory():
         **edge_attributes: List[str]):
 
         update_dict={
-            "edge_ids":edge_ids,
+            "edge_id":edge_ids,
             **edge_attributes
         }
 
