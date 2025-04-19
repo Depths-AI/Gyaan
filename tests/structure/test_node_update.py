@@ -33,6 +33,8 @@ async def main():
             keywords=[["depths-ai"]]*NUM_NODES,
             impact=[1]*NUM_NODES)
         
+        print(await mem.get_nodes())
+        print(await mem.get_nodes_by_id(node_ids=node_ids[:10]))
         assert mem.nodes.height==NUM_NODES
         assert mem.nodes["impact"].to_list()==[1]*NUM_NODES
         print("Test completed successfully!")

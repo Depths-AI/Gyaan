@@ -201,10 +201,10 @@ class Memory():
         return node_ids
     
     async def get_nodes(self):
-        return self.nodes
+        return self.nodes.filter(pl.col("deleted") == False)
     
     async def get_nodes_by_id(self, node_ids: List[str]):
-        return self.nodes[self.nodes["node_id"].is_in(node_ids)]
+        return self.nodes.filter((pl.col("deleted") == False) & (pl.col("node_id").is_in(node_ids)))
     
     async def update_nodes(
         self, 
@@ -287,10 +287,10 @@ class Memory():
         return edge_ids
 
     async def get_edges(self):
-        return self.edges
+        return self.edges.filter(pl.col("deleted") == False)
     
     async def get_edges_by_id(self, edge_ids: List[str]):
-        return self.edges[self.nodes["edge_id"].is_in(edge_ids)]
+        return self.edges.filter((pl.col("deleted") == False) & (pl.col("edge_id").is_in(edge_ids)))
     
     async def update_edges(
         self,
@@ -300,6 +300,24 @@ class Memory():
         update_dict={
             "edge_id":edge_ids,
             **edge_attributes
+        }
+
+        update_df=pl.DataFrame(data=update_dict)
+        await update_table(table_path=f"file://{self.edges_path}",update_df=update_df,id_column="edge_id")
+
+        async with self._lock:
+            self.edges=await read_table(f"file://{self.edges_path}")
+            self.edges_columns=self.edges.columns
+
+        return edge_ids
+
+    async def delete_edges(
+        self,
+        edge_ids: List[str]):
+
+        update_dict={
+            "edge_id":edge_ids,
+            "deleted":[True]*len(edge_ids)
         }
 
         update_df=pl.DataFrame(data=update_dict)

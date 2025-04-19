@@ -29,8 +29,15 @@ async def main():
             impact=[0]*NUM_NODES
         )
 
+        print(await mem.get_nodes())
+        print(await mem.get_nodes_by_id(node_ids=node_ids[:10]))
+
         node_ids=await mem.delete_nodes(
             node_ids=node_ids[:NUM_DELETE])
+
+        print("Nodes fetched after soft-delete")
+        print(await mem.get_nodes())
+        print(await mem.get_nodes_by_id(node_ids=node_ids[:10]))
         
         assert mem.nodes.height==NUM_NODES
         assert mem.nodes["deleted"].to_list()==[True]*NUM_DELETE

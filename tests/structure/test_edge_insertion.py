@@ -50,7 +50,8 @@ async def main():
             type=["internal"]*NUM_EDGES
         )
 
-        print(mem.edges)
+        print(await mem.get_edges())
+        print(await mem.get_edges_by_id(edge_ids=edge_ids))
     
     finally:
         rmtree("test_edge_insertion")

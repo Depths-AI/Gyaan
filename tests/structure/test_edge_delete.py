@@ -12,7 +12,7 @@ NUM_EDGES=10
 async def main():
     try:
         mem=await Memory.create(
-            memory_path="test_edge_update",
+            memory_path="test_edge_delete",
             title="Test Memory",
             description="This is a test memory.",
             embedding=[0.0],
@@ -53,16 +53,15 @@ async def main():
         print(await mem.get_edges())
         print(await mem.get_edges_by_id(edge_ids=edge_ids))
 
-        edge_ids=await mem.update_edges(
-            edge_ids=edge_ids,
-            type=["updated"]*NUM_EDGES
+        edge_ids=await mem.delete_edges(
+            edge_ids=edge_ids
         )
 
-        print("Edges after update")
+        print("Inspecting edges after soft-delete")
         print(await mem.get_edges())
         print(await mem.get_edges_by_id(edge_ids=edge_ids))
     
     finally:
-        rmtree("test_edge_update")
+        rmtree("test_edge_delete")
 
 asyncio.run(main())
