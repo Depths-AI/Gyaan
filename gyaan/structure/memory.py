@@ -4,7 +4,6 @@ from gyaan.utils.io import *
 import polars as pl
 import asyncio
 
-from datetime import datetime, timezone
 from typing import Optional,Dict, List, Any
 import os
 from uuid import uuid4
@@ -16,8 +15,8 @@ class Memory():
         memory_path:str,
         title: str,
         description: str,
-        embedding: Optional[List[float]]=[],
-        keywords: Optional[List[str]]=[]):
+        embedding: Optional[List[float]]=[0.0]*1024,
+        keywords: Optional[List[str]]=["keyword"]):
 
         self.id=str(uuid4())
         self.title=title

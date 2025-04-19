@@ -82,7 +82,33 @@ async def update_table(
             if attempt == num_retries - 1:
                 raise e
             await asyncio.sleep((attempt+1)*0.1)
-            
+
+async def delete_rows(
+    table_path:str,
+    ids_to_delete_df: pl.DataFrame,
+    id_column: str = "id",
+    num_retries: Optional[int] = 3):
+             
+    assert table_path.startswith("file://"), "Table path must be a file URI"
+    assert ids_to_delete_df.height>0, "Data to be deleted should be non-empty"
+    
+    predicate=f"source.{id_column}=target.{id_column}"
+    for attempt in range(num_retries):
+        try:
+            ids_to_delete_df.write_delta(
+                table_path,
+                mode="merge",
+                delta_merge_options={
+                    "predicate": predicate,
+                    "source_alias": "source",
+                    "target_alias": "target"
+                }
+            ).when_matched_delete().execute()
+            break
+        except Exception as e:
+            if attempt == num_retries - 1:
+                raise e
+            await asyncio.sleep((attempt+1)*0.1)
 
 async def optimize(
     table_path:str,
