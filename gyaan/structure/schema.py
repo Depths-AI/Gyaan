@@ -6,7 +6,7 @@ MEMORY_SCHEMA={
     "description": str,
     "keywords": List[str],
     "embedding": List[float],
-    "is_deleted": bool,
+    "deleted": bool,
     "memory_storage_path":str,
     "node_attributes":List[str],
     "edge_attributes":List[str]
@@ -20,7 +20,7 @@ NODE_SCHEMA={
     "description": str,
     "keywords": List[str],
     "embedding": List[float],
-    "is_deleted": bool
+    "deleted": bool
 }
 
 EDGE_SCHEMA={

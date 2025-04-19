@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from gyaan.structure.memory import Memory
 
 NUM_NODES=100
+NUM_DELETE=100
 async def main():
     try:
         mem=await Memory.create(
@@ -28,13 +29,11 @@ async def main():
             impact=[0]*NUM_NODES
         )
 
-        node_ids=await mem.update_nodes(
-            node_ids=node_ids,
-            keywords=[["depths-ai"]]*NUM_NODES,
-            impact=[1]*NUM_NODES)
+        node_ids=await mem.delete_nodes(
+            node_ids=node_ids[:NUM_DELETE])
         
         assert mem.nodes.height==NUM_NODES
-        assert mem.nodes["impact"].to_list()==[1]*NUM_NODES
+        assert mem.nodes["deleted"].to_list()==[True]*NUM_DELETE
         print("Test completed successfully!")
     
     finally:

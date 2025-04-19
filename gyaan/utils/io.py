@@ -82,31 +82,7 @@ async def update_table(
             if attempt == num_retries - 1:
                 raise e
             await asyncio.sleep((attempt+1)*0.1)
-
-async def soft_delete(
-    table_path:str,
-    delete_df: pl.DataFrame,
-    predicate:str="source.id=target.id",
-    num_retries: Optional[int]=3):
-    
-    assert table_path.startswith("file://"), "Table path must be a file URI"
-    assert predicate is not None, "Predicate must be provided"
-    
-    for attempt in range(num_retries):
-        try:
-            delete_df.write_delta(
-                table_path,
-                mode="merge",
-                delta_merge_options={
-                    "predicate": predicate,
-                    "source_alias": "source",
-                    "target_alias": "target"
-                }).when_matched_update(updates={"deleted":"source.deleted"}).execute()
-            break
-        except Exception as e:
-            if attempt == num_retries - 1:
-                raise e
-            await asyncio.sleep((attempt+1)*0.1)
+            
 
 async def optimize(
     table_path:str,

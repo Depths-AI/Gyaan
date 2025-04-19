@@ -25,7 +25,7 @@ class Memory():
         self.embedding=embedding
         self.keywords=keywords
         self.memory_storage_path=memory_path
-        self.is_deleted=False
+        self.deleted=False
         self._lock=asyncio.Lock()
 
         self.metadata_path=os.path.abspath(os.path.join(self.memory_storage_path,"metadata"))
@@ -52,7 +52,7 @@ class Memory():
             "description":self.description,
             "embedding":self.embedding,
             "keywords":self.keywords,
-            "is_deleted":self.is_deleted,
+            "deleted":self.deleted,
             "memory_storage_path":self.memory_storage_path,
             "node_attributes":self.node_columns,
             "edge_attributes":self.edge_columns
@@ -98,7 +98,7 @@ class Memory():
             "description":self.description,
             "embedding":self.embedding,
             "keywords":self.keywords,
-            "is_deleted":self.is_deleted,
+            "deleted":self.deleted,
             "memory_storage_path":self.memory_storage_path,
             "node_attributes":self.node_columns,
             "edge_attributes":self.edge_columns
@@ -108,7 +108,7 @@ class Memory():
     
     async def soft_delete(self):
         async with self._lock:
-            self.is_deleted=True
+            self.deleted=True
 
         metadata_df=pl.DataFrame(data=[{
             "id":self.id,
@@ -116,7 +116,7 @@ class Memory():
             "description":self.description,
             "embedding":self.embedding,
             "keywords":self.keywords,
-            "is_deleted":self.is_deleted,
+            "deleted":self.deleted,
             "memory_storage_path":self.memory_storage_path,
             "node_attributes":self.node_columns,
             "edge_attributes":self.edge_columns
@@ -148,7 +148,7 @@ class Memory():
             metadata_dict=metadata_df.to_dict(as_series=False)
         except:
             raise ValueError("Memory not found")
-        if metadata_dict["is_deleted"][0]==False:
+        if metadata_dict["deleted"][0]==False:
             memory=cls(
                 memory_path,
                 metadata_dict["title"][0],
@@ -184,7 +184,7 @@ class Memory():
             "description":descriptions,
             "keywords":keywords,
             "embedding":embeddings,
-            "is_deleted":[False]*batch_size,
+            "deleted":[False]*batch_size,
             **node_attributes
         }
     
@@ -224,3 +224,23 @@ class Memory():
             self.node_columns=self.nodes.columns
 
         return node_ids
+    
+    async def delete_nodes(
+        self, 
+        node_ids: List[str]):
+        
+        update_dict={
+            "node_id":node_ids,
+            "deleted":[True]*len(node_ids)
+        }
+
+        update_df=pl.DataFrame(data=update_dict)
+        await update_table(table_path=f"file://{self.nodes_path}",update_df=update_df,id_column="node_id")
+
+        async with self._lock:
+            self.nodes=await read_table(f"file://{self.nodes_path}")
+            self.node_columns=self.nodes.columns
+
+        return node_ids
+    
+    
