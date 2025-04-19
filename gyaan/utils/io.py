@@ -58,12 +58,15 @@ async def insert_table(
 async def update_table(
     table_path:str,
     update_df: pl.DataFrame,
-    predicate:str="source.id=target.id",
+    id_column: str="id",
     num_retries: Optional[int]=3):
 
     assert table_path.startswith("file://"), "Table path must be a file URI"
     assert update_df.height>0, "Data to be updated should be non-empty"
     
+    predicate=f"source.{id_column}=target.{id_column}"
+    update_set = {col: f"source.{col}" for col in update_df.columns}
+
     for attempt in range(num_retries):
         try:
             update_df.write_delta(
@@ -73,7 +76,7 @@ async def update_table(
                     "predicate": predicate,
                     "source_alias": "source",
                     "target_alias": "target"
-                }).when_matched_update_all().execute()
+                }).when_matched_update(updates=update_set).execute()
             break
         except Exception as e:
             if attempt == num_retries - 1:
