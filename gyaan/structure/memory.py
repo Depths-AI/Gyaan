@@ -243,4 +243,71 @@ class Memory():
 
         return node_ids
     
+    async def add_edges(
+        self,
+        source_nodes: List[str],
+        target_nodes: List[str],
+        labels: List[str],
+        weights: List[str],
+        descriptions: List[str],
+        keywords: List[List[str]],
+        embeddings: List[List[float]],
+        **edge_attributes: List[Any]):
+
+        batch_size=len(source_nodes)
+
+        assert len(target_nodes)==batch_size, "All edges should have source and target nodes"
+
+        edge_ids=[str(uuid4()) for _ in range(batch_size)]
+
+        update_dict={
+            "memory_id":[self.id]*batch_size,
+            "edge_id":edge_ids,
+            "source_node_id":source_nodes,
+            "target_node_id":target_nodes,
+            "weight":weights,
+            "label":labels,
+            "description":descriptions,
+            "keywords":keywords,
+            "embedding":embeddings,
+            "deleted":[False]*batch_size,
+            **edge_attributes
+        }
+
+        assert self.edge_columns==list(update_dict.keys()),f"Not all attributes have been supplied. Correct attributes are: {self.edge_columns}"
+
+        insertion_df=pl.DataFrame(data=update_dict)
+
+        await insert_table(f"file://{self.edges_path}", insertion_df)
+
+        async with self._lock:
+            self.edges=await read_table(f"file://{self.edges_path}")
+            self.edge_columns=self.edges.columns
+
+        return edge_ids
+
+    async def get_edges(self):
+        return self.edges
+    
+    async def get_edges_by_id(self, edge_ids: List[str]):
+        return self.edges[self.nodes["edge_id"].is_in(edge_ids)]
+    
+    async def update_edges(
+        self,
+        edge_ids: List[str],
+        **edge_attributes: List[str]):
+
+        update_dict={
+            "edge_ids":edge_ids,
+            **edge_attributes
+        }
+
+        update_df=pl.DataFrame(data=update_dict)
+        await update_table(table_path=f"file://{self.edges_path}",update_df=update_df,id_column="edge_id")
+
+        async with self._lock:
+            self.edges=await read_table(f"file://{self.edges_path}")
+            self.edges_columns=self.edges.columns
+
+        return edge_ids
     

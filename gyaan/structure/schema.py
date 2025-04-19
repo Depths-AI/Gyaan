@@ -24,16 +24,16 @@ NODE_SCHEMA={
 }
 
 EDGE_SCHEMA={
-    "source_cluster_id": str,  
-    "source_node_id": str,
-    "target_cluster_id": str,  
+    "memory_id":str,
+    "edge_id":str,
+    "source_node_id": str,  
     "target_node_id": str,
     "weight": float,
     "label": str,
     "description": str,
     "keywords": List[str],
     "embedding": List[float],
-    "is_deleted": bool
+    "deleted": bool
 }
 
 def generate_node_schema(custom_attributes: Dict[Any,Any]):
